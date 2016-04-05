@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+USER_ID=1234
+DOCKER_USER_NAME=dev
+
+function is_docker_user { [[ $1 == $DOCKER_USER_NAME ]]; }
+
+function setup_user {
+  USER_NAME=$1
+  if is_docker_user $USER_NAME; then
+    groupadd dev
+    groupadd supergroup
+    HOME_TEMPLATE=
+  else
+    HOME_TEMPLATE="-k /tmp/home/$DOCKER_USER_NAME"
+  fi
+  useradd -om $HOME_TEMPLATE -u $USER_ID -g dev -G $SUDO_GROUP,supergroup \
+      -s /bin/bash $USER_NAME
+  echo $USER_NAME:cloudera | chpasswd
+  if ! is_docker_user $USER_NAME; then
+    for F in .IdeaIC14 .ivy2 .m2 Impala Impala-auxiliary-tests Impala-lzo hadoop-lzo; do
+      rm -rf /home/$USER_NAME/$F
+      ln -s /home/$DOCKER_USER_NAME/$F /home/$USER_NAME/$F
+    done
+  fi
+  rsync -aW /tmp/home/$USER_NAME/ /home/$USER_NAME
+  chown -R $USER_NAME /home/$USER_NAME
+  chmod -R g-w /home/$USER_NAME
+  chmod -R o-w /home/$USER_NAME
+  chmod 600 /home/$USER_NAME/.ssh/*
+  echo $USER_NAME:cloudera | chpasswd
+  if [[ -e /home/$USER_NAME/.extra_zshrc ]]; then
+    chsh -s $(which zsh) $USER_NAME
+  fi
+}
+
+function setup_users {
+  for USER_NAME in $(ls -1 /tmp/home); do
+    if is_docker_user $USER_NAME; then continue; fi
+    setup_user $USER_NAME
+  done
+}
+
+CMD=$1
+shift
+$CMD $@

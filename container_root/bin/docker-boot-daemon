@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+
+if ! $(dirname "$0")/docker-boot; then
+  echo Failed to startup >&2
+  exit 1
+fi
+
+echo "Docker container is ready for use but you probably want to ctrl-c and rerun"
+echo "using the -d option or override this default startup command (ex: append"
+echo "/bin/bash to the docker run command)."
+
+function run_forever {
+  local RUN_DIR=/var/run/boot
+  sudo mkdir -p $RUN_DIR
+  sudo chown $(id -un) $RUN_DIR
+  rm -f $RUN_DIR/wait
+  mkfifo $RUN_DIR/wait
+  while true; do
+    read FOREVER < $RUN_DIR/wait || true
+    sleep 60   # in case something goes wrong
+  done
+}
+
+run_forever &
+wait

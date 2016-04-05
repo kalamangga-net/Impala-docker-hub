@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+REPO="$1"
+shift
+
+DIR=$(basename $REPO)
+DIR=${DIR%.git}
+
+function is_alive {
+  kill -0 $1 &>/dev/null
+}
+
+for RETRY in {1..5}; do
+  git clone --depth=1 $REPO "$@" &
+  PID=$!
+  for S in {1..1200}; do
+    if ! is_alive $PID; then
+      wait $PID
+      exit
+    fi
+    sleep 1
+  done
+  kill $PID
+  rm -rf $DIR
+done
+
+exit 1

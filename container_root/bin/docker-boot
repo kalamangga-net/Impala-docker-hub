@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+DIR=$(dirname "$0")
+
+if [[ ! -e /home/dev/.ssh/id_rsa ]]; then
+  echo "Generating an SSH key for the dev user"
+  sudo -u dev ssh-keygen -t rsa -q -N "" -f /home/dev/.ssh/id_rsa
+  sudo -u dev cp /home/dev/.ssh/{id_rsa.pub,authorized_keys}
+  sudo -u dev chmod 600 /home/dev/.ssh/authorized_keys
+fi
+
+# For some reason the "service" command doesn't work for ssh
+sudo /etc/init.d/ssh start || (echo "Failed to start SSH" && exit 1)
+IP=$(/sbin/ifconfig eth0 | grep "inet addr" | awk '{print $2}' | awk -F: '{print $2}')
+echo "SSH is running on $IP port 22"
+
+sudo service postgresql start || (echo "Failed to start Postgres" && exit 1)
+
+for ATTEMPT in {1..300}; do
+  echo "Waiting for Postgres to accept queries"
+  if sudo -u postgres psql -c "SELECT 1"; then
+    exit
+  fi
+  sleep 1
+done
+
+echo "Timeout waiting for Postgres to accept queries"
+exit 1
