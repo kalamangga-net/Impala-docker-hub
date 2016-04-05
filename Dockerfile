@@ -217,13 +217,6 @@ RUN docker-boot \
     && popd \
     && ./buildall.sh -notests -noclean -format -testdata \
     && sudo rm -rf $IMPALA_HOME/testdata/impala-data \
-    && if ! false; then \
-         start-impala-cluster.py --kill; \
-         kill-all.sh; \
-         sleep 30; \
-         tar czf testdata.tar.gz testdata; \
-         rm -rf testdata; \
-       fi \
     && if false && false; then \
          cd tests/comparison; \
          ./data_generator.py --use-postgresql --db-name=functional \
