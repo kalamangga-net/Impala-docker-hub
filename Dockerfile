@@ -200,36 +200,3 @@ RUN docker-boot && ./buildall.sh -notests
 USER dev
 ENV USER dev
 WORKDIR /home/dev/Impala
-RUN docker-boot \
-    && . bin/impala-config.sh \
-    && mkdir -p $IMPALA_HOME/testdata/impala-data \
-    && pushd $IMPALA_HOME/testdata/impala-data \
-    && cat /tmp/tpch.tar.gz[0..6] > tpch.tar.gz \
-    && tar -xzf tpch.tar.gz \
-    && rm tpch.tar.gz \
-    && cat /tmp/tpcds.tar.gz[0..3] > tpcds.tar.gz \
-    && tar -xzf tpcds.tar.gz \
-    && rm tpcds.tar.gz \
-    && if false; then \
-         wget http://util-1.ent.cloudera.com/impala-test-data/foo.tar.gz; \
-         tar -xzf foo.tar.gz; \
-       fi \
-    && popd \
-    && ./buildall.sh -notests -noclean -format -testdata \
-    && sudo rm -rf $IMPALA_HOME/testdata/impala-data \
-    && if ! false; then \
-         start-impala-cluster.py --kill; \
-         kill-all.sh; \
-         sleep 30; \
-         tar czf testdata.tar.gz testdata; \
-         rm -rf testdata; \
-       fi \
-    && if false && false; then \
-         cd tests/comparison; \
-         ./data_generator.py --use-postgresql --db-name=functional \
-             --migrate-table-names=alltypes,alltypestiny,alltypesagg  migrate; \
-         ./data_generator.py --use-postgresql; \
-       fi
-
-USER dev
-WORKDIR /home/dev/Impala
