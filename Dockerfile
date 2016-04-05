@@ -191,12 +191,3 @@ WORKDIR /home/dev/hadoop-lzo
 RUN ant package
 
 WORKDIR /home/dev/Impala
-RUN docker-boot \
-    && . bin/impala-config.sh \
-    && ./bin/create-test-configuration.sh
-# Building tests add 10G to the image size, that's probably not worth the convenience.
-RUN docker-boot && ./buildall.sh -notests
-
-USER dev
-ENV USER dev
-WORKDIR /home/dev/Impala
