@@ -1,7 +1,23 @@
 FROM cloudera/impala-dev:prereqs
 
+WORKDIR /home/dev/hadoop-lzo
+RUN git fetch --all
+RUN git reset --hard origin/master
+RUN git clean -xdf
+
+WORKDIR /home/dev/Impala-lzo
+RUN git fetch --all
+RUN git reset --hard origin/cdh5-trunk
+RUN git clean -xdf
+
+WORKDIR /home/dev/Impala
+RUN git fetch --all
+RUN git reset --hard origin/cdh5-trunk
+RUN git clean -xdf
+
 RUN docker-boot \
     && . bin/impala-config.sh \
     && ./bin/create-test-configuration.sh
-# Building tests add 10G to the image size, that's probably not worth the convenience.
-RUN docker-boot && ./buildall.sh -notests
+
+RUN . bin/impala-config.sh \
+    && bin/bootstrap_toolchain.py
