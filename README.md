@@ -5,7 +5,7 @@
 Several images are available but only two are inteded for use:
 
 #### Complete
-The complete image has Impala built and test data loaded. Because of the size and time required to build this image and limitations of dockerhub, **the image is not available for download but can be built locally**. The built images will be about 50 GB in size.
+The complete image has Impala built and test data loaded. Because of the size and time required to build this image and limitations of dockerhub, **the image is not available for download but can be built locally**. The built image will be about 50 GB in size and take 1-4 hours depending on your system.
 
 To build the complete image:
 
