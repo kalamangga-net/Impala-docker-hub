@@ -127,109 +127,13 @@ RUN chmod 777 $IMPALA_TOOLACHAIN
 
 USER dev
 WORKDIR /home/dev
-RUN /tmp/git-clone-retry \
-    $(if false; then \
-      echo http://github.mtv.cloudera.com/CDH/Impala.git; \
-    else \
-      echo https://github.com/cloudera/Impala.git; \
-    fi)
-RUN /tmp/git-clone-retry \
-    $(if false; then \
-      echo http://github.mtv.cloudera.com/CDH/Impala-lzo.git; \
-    else \
-      echo https://github.com/cloudera/impala-lzo.git Impala-lzo; \
-    fi)
-RUN /tmp/git-clone-retry \
-    $(if false; then \
-      echo http://github.mtv.cloudera.com/CDH/hadoop-lzo.git; \
-    else \
-      echo https://github.com/cloudera/hadoop-lzo.git; \
-    fi)
+RUN /tmp/git-clone-retry https://github.com/cloudera/Impala.git
+RUN /tmp/git-clone-retry https://github.com/cloudera/impala-lzo.git Impala-lzo
+RUN /tmp/git-clone-retry https://github.com/cloudera/hadoop-lzo.git
 RUN for DIR in Impala Impala-lzo; do \
       curl -o $DIR/.git/hooks/commit-msg \
           http://gerrit.cloudera.org:8080/tools/hooks/commit-msg \
       && chmod +x $DIR/.git/hooks/commit-msg; \
     done
 ENV IMPALA_HOME /home/dev/Impala
-
-USER dev
-WORKDIR /home/dev/hadoop-lzo
-RUN git fetch origin
-RUN if git branch | grep master; then \
-      git checkout master; \
-      git reset --hard origin/master; \
-    else \
-      git remote set-branches origin master; \
-      git fetch origin; \
-      git checkout -b master origin/master; \
-    fi
-WORKDIR /home/dev/Impala-lzo
-RUN git fetch origin
-RUN if git branch | grep cdh5-trunk; then \
-      git checkout cdh5-trunk; \
-      git reset --hard origin/cdh5-trunk; \
-    else \
-      git remote set-branches origin cdh5-trunk; \
-      git fetch origin; \
-      git checkout -b cdh5-trunk origin/cdh5-trunk; \
-    fi
-WORKDIR /home/dev/Impala
-RUN git fetch origin
-RUN if git branch | grep cdh5-trunk; then \
-      git checkout cdh5-trunk; \
-      git reset --hard origin/cdh5-trunk; \
-    else \
-      git remote set-branches origin cdh5-trunk; \
-      git fetch origin; \
-      git checkout -b cdh5-trunk origin/cdh5-trunk; \
-    fi
-
-USER dev
 ENV USER dev
-
-WORKDIR /home/dev/hadoop-lzo
-RUN ant package
-
-WORKDIR /home/dev/Impala
-RUN docker-boot \
-    && . bin/impala-config.sh \
-    && ./bin/create-test-configuration.sh
-# Building tests add 10G to the image size, that's probably not worth the convenience.
-RUN docker-boot && ./buildall.sh -notests
-
-USER dev
-ENV USER dev
-WORKDIR /home/dev/Impala
-RUN docker-boot \
-    && . bin/impala-config.sh \
-    && mkdir -p $IMPALA_HOME/testdata/impala-data \
-    && pushd $IMPALA_HOME/testdata/impala-data \
-    && cat /tmp/tpch.tar.gz[0..6] > tpch.tar.gz \
-    && tar -xzf tpch.tar.gz \
-    && rm tpch.tar.gz \
-    && cat /tmp/tpcds.tar.gz[0..3] > tpcds.tar.gz \
-    && tar -xzf tpcds.tar.gz \
-    && rm tpcds.tar.gz \
-    && if false; then \
-         wget http://util-1.ent.cloudera.com/impala-test-data/foo.tar.gz; \
-         tar -xzf foo.tar.gz; \
-       fi \
-    && popd \
-    && ./buildall.sh -notests -noclean -format -testdata \
-    && sudo rm -rf $IMPALA_HOME/testdata/impala-data \
-    && if ! false; then \
-         start-impala-cluster.py --kill; \
-         kill-all.sh; \
-         sleep 30; \
-         tar czf testdata.tar.gz testdata; \
-         rm -rf testdata; \
-       fi \
-    && if false && false; then \
-         cd tests/comparison; \
-         ./data_generator.py --use-postgresql --db-name=functional \
-             --migrate-table-names=alltypes,alltypestiny,alltypesagg  migrate; \
-         ./data_generator.py --use-postgresql; \
-       fi
-
-USER dev
-WORKDIR /home/dev/Impala
