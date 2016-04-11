@@ -10,6 +10,12 @@ The complete image has Impala built and test data loaded. Because of the size an
 To build the complete image:
 
 ```
+# Get the latest version of the "minimal" image. Only really needed
+# if you already have a minimal image from before Apr 10, 2016. That
+# image would be incompatible.
+$ docker pull cloudera/impala-dev:minimal
+
+# Build the image.
 $ docker build complete
 ```
 
